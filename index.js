@@ -9,6 +9,28 @@ app.use(cors());
 app.use(express.json());
 require("dotenv").config();
 
+// Verify JSON WEB TOKEN ======
+const verifyJWToken = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (authorization) {
+    const token = authorization.split()[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, (error, decoded) => {
+      if (error) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Unauthorized Access" });
+      }
+      req.decoded = decoded;
+      console.log(req.decoded);
+      next();
+    });
+  } else {
+    return res
+      .status(401)
+      .send({ error: true, message: "Unauthorized Access" });
+  }
+};
+
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wqlyhsd.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -40,12 +62,14 @@ async function run() {
         const jwToken = jwt.sign(currentUser, process.env.ACCESS_TOKEN, {
           expiresIn: "3h",
         });
+        res.send(jwToken);
       }
     });
 
     // Users API --- (Confidential)
     app.post("/users", async (req, res) => {
       const newUser = req.body;
+
       const query = { email: newUser.email };
       const foundUser = await usersCollection.findOne(query);
       if (foundUser) {
@@ -55,7 +79,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyJWToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
