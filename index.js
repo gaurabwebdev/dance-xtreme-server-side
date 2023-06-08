@@ -37,7 +37,6 @@ async function run() {
       const newUser = req.body;
       const result = await usersCollection.insertOne(newUser);
       res.send(result);
-      console.log(result);
     });
 
     app.get("/users", async (req, res) => {
