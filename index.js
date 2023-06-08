@@ -64,7 +64,6 @@ async function run() {
       const query = { email: req.decoded.email };
 
       const searchInstructor = await usersCollection.findOne(query);
-      console.log(searchInstructor);
       if (searchInstructor.role !== "instructor") {
         return res.status(403).send({ error: true, message: "Bad Access" });
       }
