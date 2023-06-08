@@ -59,6 +59,18 @@ async function run() {
 
       next();
     };
+    // instructor verification middleware
+    const verifyInstructor = async (req, res, next) => {
+      const query = { email: req.decoded.email };
+
+      const searchInstructor = await usersCollection.findOne(query);
+      console.log(searchInstructor);
+      if (searchInstructor.role !== "instructor") {
+        return res.status(403).send({ error: true, message: "Bad Access" });
+      }
+
+      next();
+    };
 
     // All APIs
     app.get("/", (req, res) => {
@@ -108,6 +120,21 @@ async function run() {
         const query = { email: email };
         const result = await usersCollection.findOne(query);
         res.send({ admin: true });
+      }
+    );
+    // verifying instructor
+    app.get(
+      "/users/instructor/:email",
+      verifyJWToken,
+      verifyInstructor,
+      async (req, res) => {
+        const email = req.params.email;
+        if (req.decoded.email !== email) {
+          return res.status(403).send({ instructor: false });
+        }
+        const query = { email: email };
+        const result = await usersCollection.findOne(query);
+        res.send({ instructor: true });
       }
     );
     // Send a ping to confirm a successful connection
