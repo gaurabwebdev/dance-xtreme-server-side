@@ -21,6 +21,8 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
+  const dataBase = client.db("danceXtreme");
+  const usersCollection = dataBase.collection("users");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -28,6 +30,18 @@ async function run() {
     // All APIs
     app.get("/", (req, res) => {
       res.send("Dance Xtreme");
+    });
+
+    // Users API --- (Confidential)
+    app.post("/post", async (req, res) => {
+      const newUser = req.body;
+      const result = await usersCollection.insertOne(newUser);
+      res.send(result);
+    });
+
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
     });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
