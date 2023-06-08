@@ -50,6 +50,18 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    const verifyAdmin = async (req, res, next) => {
+      const query = { email: req.params.email };
+      const searchUser = await usersCollection.findOne(query);
+      if (searchUser.role !== "admin" || req.decoded.email !== query.email) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Unauthorized Access" });
+      }
+
+      return res.send({ admin: true });
+    };
+
     // All APIs
     app.get("/", (req, res) => {
       res.send("Dance Xtreme");
@@ -83,6 +95,9 @@ async function run() {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
+
+    // verifying admin
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
