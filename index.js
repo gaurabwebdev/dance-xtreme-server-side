@@ -36,6 +36,11 @@ async function run() {
     // jwt issue API
     app.get("/jwt", (req, res) => {
       const currentUser = req.body;
+      if (currentUser?.email) {
+        const jwToken = jwt.sign(currentUser, process.env.ACCESS_TOKEN, {
+          expiresIn: "3h",
+        });
+      }
     });
 
     // Users API --- (Confidential)
