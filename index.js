@@ -13,7 +13,7 @@ require("dotenv").config();
 const verifyJWToken = (req, res, next) => {
   const authorization = req.headers.authorization;
   if (authorization) {
-    const token = authorization.split()[1];
+    const token = authorization.split(" ")[1];
     jwt.verify(token, process.env.ACCESS_TOKEN, (error, decoded) => {
       if (error) {
         return res
@@ -21,7 +21,6 @@ const verifyJWToken = (req, res, next) => {
           .send({ error: true, message: "Unauthorized Access" });
       }
       req.decoded = decoded;
-      console.log(req.decoded);
       next();
     });
   } else {
@@ -50,16 +49,15 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    // admin verification middleware
     const verifyAdmin = async (req, res, next) => {
-      const query = { email: req.params.email };
-      const searchUser = await usersCollection.findOne(query);
-      if (searchUser.role !== "admin" || req.decoded.email !== query.email) {
-        return res
-          .status(403)
-          .send({ error: true, message: "Unauthorized Access" });
+      const query = { email: req.decoded.email };
+      const searchAdmin = await usersCollection.findOne(query);
+      if (searchAdmin.role !== "admin") {
+        return res.status(403).send({ error: true, message: "Bad Access" });
       }
 
-      return res.send({ admin: true });
+      next();
     };
 
     // All APIs
@@ -68,13 +66,13 @@ async function run() {
     });
 
     // jwt issue API
-    app.get("/jwt", (req, res) => {
+    app.post("/jwt", (req, res) => {
       const currentUser = req.body;
       if (currentUser?.email) {
         const jwToken = jwt.sign(currentUser, process.env.ACCESS_TOKEN, {
           expiresIn: "3h",
         });
-        res.send(jwToken);
+        res.send({ jwToken });
       }
     });
 
@@ -84,6 +82,7 @@ async function run() {
 
       const query = { email: newUser.email };
       const foundUser = await usersCollection.findOne(query);
+
       if (foundUser) {
         return res.send({ message: "user already exist" });
       }
@@ -97,7 +96,20 @@ async function run() {
     });
 
     // verifying admin
-
+    app.get(
+      "/users/admin/:email",
+      verifyJWToken,
+      verifyAdmin,
+      async (req, res) => {
+        const email = req.params.email;
+        if (req.decoded.email !== email) {
+          return res.status(403).send({ admin: false });
+        }
+        const query = { email: email };
+        const result = await usersCollection.findOne(query);
+        res.send({ admin: true });
+      }
+    );
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
