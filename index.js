@@ -33,10 +33,11 @@ async function run() {
     });
 
     // Users API --- (Confidential)
-    app.post("/post", async (req, res) => {
+    app.post("/users", async (req, res) => {
       const newUser = req.body;
       const result = await usersCollection.insertOne(newUser);
       res.send(result);
+      console.log(result);
     });
 
     app.get("/users", async (req, res) => {
