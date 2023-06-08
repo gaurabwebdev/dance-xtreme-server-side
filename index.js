@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -32,9 +33,19 @@ async function run() {
       res.send("Dance Xtreme");
     });
 
+    // jwt issue API
+    app.get("/jwt", (req, res) => {
+      const currentUser = req.body;
+    });
+
     // Users API --- (Confidential)
     app.post("/users", async (req, res) => {
       const newUser = req.body;
+      const query = { email: newUser.email };
+      const foundUser = await usersCollection.findOne(query);
+      if (foundUser) {
+        return res.send({ message: "user already exist" });
+      }
       const result = await usersCollection.insertOne(newUser);
       res.send(result);
     });
