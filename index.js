@@ -175,14 +175,32 @@ async function run() {
       }
     );
 
-    // Classes APIs
+    // Class Management APIs
+    // Open CLass API
+    app.get("/all-classes", async (req, res) => {
+      const query = { status: "approved" };
+      const options = {
+        sort: { price: 1 },
+        projection: {
+          class_img_url: 1,
+          class_name: 1,
+          available_seats: 1,
+          price: 1,
+        },
+      };
+      const result = await classes.find(query, options).toArray();
+
+      res.send(result);
+    });
+
+    // Classes Posting API
     app.post("/classes", verifyJWToken, verifyInstructor, async (req, res) => {
       const newClass = req.body;
       const result = await classes.insertOne(newClass);
       res.send(result);
     });
 
-    // Class Management API
+    // Class Details Access API
 
     app.get("/classes", verifyJWToken, verifyAdmin, async (req, res) => {
       const allClasses = await classes.find().toArray();
