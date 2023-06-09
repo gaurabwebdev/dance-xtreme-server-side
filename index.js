@@ -165,17 +165,12 @@ async function run() {
       verifyAdmin,
       async (req, res) => {
         const filter = { _id: new ObjectId(req.params.id) };
-        const options = { upsert: true };
         const updateField = {
           $set: {
             role: `instructor`,
           },
         };
-        const result = await usersCollection.updateOne(
-          filter,
-          updateField,
-          options
-        );
+        const result = await usersCollection.updateOne(filter, updateField);
         res.send(result);
       }
     );
@@ -187,11 +182,14 @@ async function run() {
       res.send(result);
     });
 
+    // Class Management API
+
     app.get("/classes", verifyJWToken, verifyAdmin, async (req, res) => {
       const allClasses = await classes.find().toArray();
       res.send(allClasses);
     });
 
+    // Individual Instructor Based API
     app.get(
       "/classes/:email",
       verifyJWToken,
@@ -203,6 +201,37 @@ async function run() {
         res.send(result);
       }
     );
+
+    // Class Approval API
+    app.patch("/classes", async (req, res) => {
+      const id = req.query.classId;
+      const newStatus = req.query.newStatus;
+      if (id && newStatus === "approve") {
+        console.log(id);
+        console.log(newStatus);
+        const query = { _id: new ObjectId(id) };
+        const updateField = {
+          $set: {
+            status: newStatus,
+          },
+        };
+        const result = await classes.updateOne(query, updateField);
+        return res.send(result);
+      }
+
+      if (id && newStatus === "deny") {
+        console.log(id);
+        console.log(newStatus);
+        // const query = { _id: new ObjectId(id) };
+        // const updateField = {
+        //   $set: {
+        //     status: newStatus,
+        //   },
+        // };
+        // const result = await classes.updateOne(query, updateField);
+        // return res.send(result);
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
