@@ -206,9 +206,9 @@ async function run() {
     app.patch("/classes", verifyJWToken, verifyAdmin, async (req, res) => {
       const id = req.query.classId;
       const newStatus = req.query.newStatus;
-      if (id && newStatus === "approve") {
-        console.log(id);
-        console.log(newStatus);
+      const feedback = req.body.feedback;
+
+      if (id && newStatus === "approved") {
         const query = { _id: new ObjectId(id) };
         const updateField = {
           $set: {
@@ -219,17 +219,17 @@ async function run() {
         return res.send(result);
       }
 
-      if (id && newStatus === "deny") {
-        console.log(id);
-        console.log(newStatus);
-        // const query = { _id: new ObjectId(id) };
-        // const updateField = {
-        //   $set: {
-        //     status: newStatus,
-        //   },
-        // };
-        // const result = await classes.updateOne(query, updateField);
-        // return res.send(result);
+      if (id && newStatus === "denied" && feedback) {
+        const query = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateField = {
+          $set: {
+            status: newStatus,
+            feedback: feedback,
+          },
+        };
+        const result = await classes.updateOne(query, updateField, options);
+        return res.send(result);
       }
     });
 
