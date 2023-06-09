@@ -203,7 +203,7 @@ async function run() {
     );
 
     // Class Approval API
-    app.patch("/classes", async (req, res) => {
+    app.patch("/classes", verifyJWToken, verifyAdmin, async (req, res) => {
       const id = req.query.classId;
       const newStatus = req.query.newStatus;
       if (id && newStatus === "approve") {
