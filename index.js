@@ -45,6 +45,7 @@ const client = new MongoClient(uri, {
 async function run() {
   const dataBase = client.db("danceXtreme");
   const usersCollection = dataBase.collection("users");
+  const classes = dataBase.collection("classes");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -178,6 +179,20 @@ async function run() {
         res.send(result);
       }
     );
+
+    // Classes APIs
+    app.post("/classes", verifyJWToken, verifyInstructor, async (req, res) => {
+      const newClass = req.body;
+      const result = await classes.insertOne(newClass);
+      res.send(result);
+    });
+
+    app.get("/classes/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await classes.find(query).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
