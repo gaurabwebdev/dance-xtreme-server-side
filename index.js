@@ -30,7 +30,7 @@ const verifyJWToken = (req, res, next) => {
   }
 };
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wqlyhsd.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -136,6 +136,49 @@ async function run() {
         res.send({ instructor: true });
       }
     );
+    // Make Admin API
+    app.patch(
+      "/users/make-admin/:id",
+      verifyJWToken,
+      verifyAdmin,
+      async (req, res) => {
+        const filter = { _id: new ObjectId(req.params.id) };
+        const options = { upsert: true };
+        const updateField = {
+          $set: {
+            role: `admin`,
+          },
+        };
+        const result = await usersCollection.updateOne(
+          filter,
+          updateField,
+          options
+        );
+        res.send(result);
+      }
+    );
+    // Make Instructor API
+    app.patch(
+      "/users/make-instructor/:id",
+      verifyJWToken,
+      verifyAdmin,
+      async (req, res) => {
+        const filter = { _id: new ObjectId(req.params.id) };
+        const options = { upsert: true };
+        const updateField = {
+          $set: {
+            role: `instructor`,
+          },
+        };
+        const result = await usersCollection.updateOne(
+          filter,
+          updateField,
+          options
+        );
+        res.send(result);
+      }
+    );
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
