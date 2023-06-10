@@ -237,6 +237,13 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/selected-classes/:id", verifyJWToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classSelection.deleteOne(query);
+      res.send(result);
+    });
+
     // Class Details Access API
 
     app.get("/classes", verifyJWToken, verifyAdmin, async (req, res) => {
