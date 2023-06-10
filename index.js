@@ -46,6 +46,7 @@ async function run() {
   const dataBase = client.db("danceXtreme");
   const usersCollection = dataBase.collection("users");
   const classes = dataBase.collection("classes");
+  const classSelection = dataBase.collection("selectedClasses");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -174,6 +175,20 @@ async function run() {
         res.send(result);
       }
     );
+    // Open Instructor API
+    app.get("/all-instructors", async (req, res) => {
+      const query = { role: "instructor" };
+      const options = {
+        projection: {
+          photo_url: 1,
+          email: 1,
+          name: 1,
+        },
+      };
+      const result = await usersCollection.find(query, options).toArray();
+
+      res.send(result);
+    });
 
     // Class Management APIs
     // Open CLass API
@@ -184,6 +199,7 @@ async function run() {
         projection: {
           class_img_url: 1,
           class_name: 1,
+          name: 1,
           available_seats: 1,
           price: 1,
         },
@@ -197,6 +213,27 @@ async function run() {
     app.post("/classes", verifyJWToken, verifyInstructor, async (req, res) => {
       const newClass = req.body;
       const result = await classes.insertOne(newClass);
+      res.send(result);
+    });
+
+    // Selected Class User API
+    app.post("/selected-classes", verifyJWToken, async (req, res) => {
+      const { selectedClassData } = req.body;
+      if (selectedClassData) {
+        const result = await classSelection.insertOne(selectedClassData);
+        return res.send(result);
+      }
+    });
+
+    app.get("/selected-classes", verifyJWToken, async (req, res) => {
+      const email = req.query.email;
+      if (req.decoded.email !== email) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden Access" });
+      }
+      const query = { userEmail: email };
+      const result = await classSelection.find(query).toArray();
       res.send(result);
     });
 
