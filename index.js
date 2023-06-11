@@ -345,7 +345,25 @@ async function run() {
       // res.send(result);
     });
 
-    //
+    // Paid Classes API
+    app.get("/enrolled-classes", verifyJWToken, async (req, res) => {
+      const email = req.query.email;
+      if (req.decoded.email !== email) {
+        return res
+          .status(401)
+          .send({ error: true, message: "Unauthorized access" });
+      }
+      const query = { email: email };
+      const options = {
+        projection: {
+          paymentDate: 1,
+          price: 1,
+          className: 1,
+        },
+      };
+      const result = await enrolledClasses.find(query, options).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
