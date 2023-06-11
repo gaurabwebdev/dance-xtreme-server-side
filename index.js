@@ -9,6 +9,8 @@ app.use(cors());
 app.use(express.json());
 require("dotenv").config();
 
+const stripe = require("stripe")(`${process.env.STRIPE_SK}`);
+
 // Verify JSON WEB TOKEN ======
 const verifyJWToken = (req, res, next) => {
   const authorization = req.headers.authorization;
@@ -30,6 +32,11 @@ const verifyJWToken = (req, res, next) => {
   }
 };
 
+// Cart calculation
+const calculateCart = (amount) => {
+  return amount * 100;
+};
+
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wqlyhsd.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -47,6 +54,7 @@ async function run() {
   const usersCollection = dataBase.collection("users");
   const classes = dataBase.collection("classes");
   const classSelection = dataBase.collection("selectedClasses");
+  const paidClasses = dataBase.collection("paidClasses");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -294,6 +302,22 @@ async function run() {
         return res.send(result);
       }
     });
+
+    // Creating Payment Intent
+    app.post("/create-payment-intent", verifyJWToken, async (req, res) => {
+      const cardAmount = req.body.totalPrice;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: calculateCart(cardAmount),
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      console.log(paymentIntent.client_secret);
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
+
+    // Payment Info API
+    // app.post("/");
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
