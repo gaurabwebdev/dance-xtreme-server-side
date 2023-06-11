@@ -203,13 +203,27 @@ async function run() {
     app.get("/all-classes", async (req, res) => {
       const query = { status: "approved" };
       const options = {
-        sort: { price: 1 },
+        sort: { price: -1 },
         projection: {
           class_img_url: 1,
           class_name: 1,
           name: 1,
           available_seats: 1,
           price: 1,
+        },
+      };
+      const result = await classes.find(query, options).toArray();
+
+      res.send(result);
+    });
+
+    app.get("/get-popular-classes", async (req, res) => {
+      const query = { status: "approved" };
+      const options = {
+        sort: { total_enrolled_student: -1 },
+        projection: {
+          class_img_url: 1,
+          class_name: 1,
         },
       };
       const result = await classes.find(query, options).toArray();
