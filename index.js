@@ -54,7 +54,7 @@ async function run() {
   const usersCollection = dataBase.collection("users");
   const classes = dataBase.collection("classes");
   const classSelection = dataBase.collection("selectedClasses");
-  const paidClasses = dataBase.collection("paidClasses");
+  const enrolledClasses = dataBase.collection("enrolledClasses");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -312,12 +312,40 @@ async function run() {
         currency: "usd",
         payment_method_types: ["card"],
       });
-      console.log(paymentIntent.client_secret);
       res.send({ clientSecret: paymentIntent.client_secret });
     });
 
     // Payment Info API
-    // app.post("/");
+    app.post("/payment", verifyJWToken, async (req, res) => {
+      const { currentPaymentInfo } = req.body;
+      const { email, name, transactionId, cartItemId, className, classId } =
+        currentPaymentInfo;
+      if (currentPaymentInfo) {
+        const result = await enrolledClasses.insertOne(currentPaymentInfo);
+        if (result.insertedId) {
+          cartItemId.forEach(async (item) => {
+            const query = { _id: new ObjectId(item) };
+            const deleteRes = await classSelection.deleteOne(query);
+          });
+          classId.forEach(async (singleId) => {
+            const query = { _id: new ObjectId(singleId) };
+            const updateField = {
+              $inc: {
+                available_seats: -1,
+                total_enrolled_student: 1,
+              },
+            };
+
+            const updateStudents = await classes.updateOne(query, updateField);
+          });
+          res.send(result);
+        }
+      }
+      // const result = await enrolledClasses.insertOne(currentPaymentInfo);
+      // res.send(result);
+    });
+
+    //
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
