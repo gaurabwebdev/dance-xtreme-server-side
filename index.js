@@ -57,7 +57,7 @@ async function run() {
   const enrolledClasses = dataBase.collection("enrolledClasses");
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     // admin verification middleware
     const verifyAdmin = async (req, res, next) => {
@@ -81,10 +81,10 @@ async function run() {
       next();
     };
 
-    // All APIs
-    app.get("/", (req, res) => {
-      res.send("Dance Xtreme");
-    });
+    // // All APIs
+    // app.get("/", (req, res) => {
+    //   res.send("Dance Xtreme");
+    // });
 
     // jwt issue API
     app.post("/jwt", (req, res) => {
@@ -390,6 +390,10 @@ async function run() {
   }
 }
 run().catch(console.dir);
+// All APIs
+app.get("/", (req, res) => {
+  res.send("Dance Xtreme");
+});
 
 app.listen(port, () => {
   console.log(`Dance Xtreme is running on ${port}`);
